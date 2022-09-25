@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Kevin Laurence">
+    <title>Tugas Grafkom Teori 2</title>
+</head>
+
+<body>
+    <canvas style="border:2px solid black" id="mycanvas" width="500" height="500">
+
+    </canvas>
+    <script>
+        const canvas = document.querySelector("#mycanvas");
+        const ctx = canvas.getContext("2d");
+
+        let dataGambar = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        function drawDot(data, posisi, warna) {
+            let { x, y } = posisi;
+            let { r, g, b } = warna;
+            let index = (x + y * canvas.width) * 4;
+
+            data.data[index] = r;
+            data.data[index + 1] = g;
+            data.data[index + 2] = b;
+            data.data[index + 3] = 255;
+
+        }
+
+        function polyline(data, titiks, warna) {
+            for (let i = 0; i < titiks.length - 1; i++) {
+                garis(data, titiks[i], titiks[i + 1], warna);
+            }
+        }
+
+        function polygon(data, titiks, warna) {
+            for (let i = 0; i < titiks.length - 1; i++) {
+                garis(data, titiks[i], titiks[i + 1], warna);
+            }
+            garis(data, titiks[titiks.length - 1], titiks[0], warna);
+        }
+
+        function garis(data, awal, akhir, warna) {
+            let x1 = awal.x;
+            let y1 = awal.y;
+            let x2 = akhir.x;
+            let y2 = akhir.y;
+
+            let dX = x2 - x1;
+            let dY = y2 - y1;
+
+            if (Math.abs(dY) > Math.abs(dX)) {
+                // jalan berdasarkan y
+                let x = x1;
+                if (y1 > y2) {
+                    for (let y = y1; y > y2; y -= 1) {
+                        x -= dX / dY;
+                        drawDot(data, { x: Math.round(x), y: Math.round(y) }, warna);
+                    }
+                }
+                else {
+                    for (let y = y1; y < y2; y += 1) {
+                        x += dX / dY;
+                        drawDot(data, { x: Math.round(x), y: Math.round(y) }, warna);
+                    }
+                }
+            }
+            else {
+                // jalan berdasarkan x
+                let y = y1;
+                if (x1 > x2) {
+                    for (let x = x1; x > x2; x -= 1) {
+                        y -= dY / dX;
+                        drawDot(data, { x: Math.round(x), y: Math.round(y) }, warna);
+                    }
+                }
+                else {
+                    for (let x = x1; x < x2; x += 1) {
+                        y += dY / dX;
+                        drawDot(data, { x: Math.round(x), y: Math.round(y) }, warna);
+                    }
+                }
+
+            }
+        }
+
+        let arrTitik = [];
+
+
+        // buat click kiri dan memunculkan polyline
+        canvas.addEventListener("click", (event) => {
+            arrTitik.push({ x: event.x - (event.x - event.offsetX), y: event.y - (event.y - event.offsetY) })
+            polyline(dataGambar, arrTitik, { r: 255, g: 0, b: 0 });
+            ctx.putImageData(dataGambar, 0, 0);
+        });
+
+        // buat click kanan dan membuat polygon
+        canvas.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            polygon(dataGambar, arrTitik, { r: 255, g: 0, b: 0 });
+            ctx.putImageData(dataGambar, 0, 0);
+            arrTitik = [];
+        });
+
+        let x = 100;
+        let y = 100;
+        document.addEventListener('keyup', event => {
+            // buat clear canvas
+            if (event.code === 'Space') {
+                for (let i = 0; i < 500; i++) {
+                    for (let j = 0; j < 500; j++) {
+                        drawDot(dataGambar, { x: j, y: i }, { r: 255, g: 255, b: 255 });
+                    }
+                }
+                arrTitik = [];
+            }
+            // buat etch a sketch
+            else if (event.key == "ArrowLeft") {
+                if (x >= 0) {
+                    garis(dataGambar, { x: x, y: y }, { x: x-10, y: y }, { r: 255, g: 100, b: 0 });
+                    x -= 10;
+                }
+            }
+            else if (event.key == "ArrowRight") {
+                if (x >= 0) {
+                    garis(dataGambar, { x: x, y: y }, { x: x+10, y: y }, { r: 255, g: 100, b: 0 });
+                    x += 10;
+                }
+            }
+            else if (event.key == "ArrowDown") {
+                if (y >= 0) {
+                    garis(dataGambar, { x: x, y: y }, { x: x, y: y+10 }, { r: 255, g: 100, b: 0 });
+                    y += 10;
+                }
+            }
+            else if (event.key == "ArrowUp") {
+                if (y >= 0) {
+                    garis(dataGambar, { x: x, y: y }, { x: x, y: y-10 }, { r: 255, g: 100, b: 0 });
+                    y -= 10;
+                }
+            }
+            
+        ctx.putImageData(dataGambar, 0, 0);
+
+        });
+
+
+        // garis(dataGambar, { x: 200, y: 200 }, { x: 300, y: 200 }, { r: 255, g: 100, b: 0 });
+
+        // garis(dataGambar, { x: 300, y: 200 }, { x: 400, y: 250 }, { r: 255, g: 100, b: 200 });
+
+        // garis(dataGambar, { x: 400, y: 250 }, { x: 300, y: 300 }, { r: 255, g: 255, b: 0 });
+
+        // garis(dataGambar, { x: 301, y: 300 }, { x: 200, y: 300 }, { r: 0, g: 255, b: 0 });
+
+        // garis(dataGambar, { x: 200, y: 300 }, { x: 100, y: 250 }, { r: 0, g: 0, b: 255 });
+
+        // garis(dataGambar, { x: 100, y: 250 }, { x: 200, y: 200 }, { r: 0, g: 255, b: 255 });
+
+        // garis(dataGambar, { x: 200, y: 200 }, { x: 200, y: 300 }, { r: 150, g: 150, b: 150 });
+
+        // garis(dataGambar, { x: 300, y: 300 }, { x: 300, y: 200 }, { r: 0, g: 0, b: 0 });
+
+
+        // polyline(dataGambar, [{ x: 100, y: 100 }, { x: 200, y: 200 }, { x: 100, y: 200 }, { x: 50, y: 100 }], { r: 255, g: 0, b: 0 });
+        // polygone(dataGambar, [{ x: 100, y: 100 }, { x: 200, y: 200 }, { x: 100, y: 200 }, { x: 50, y: 100 }], { r: 255, g: 0, b: 0 });
+
+        ctx.putImageData(dataGambar, 0, 0);
+    </script>
+</body>
+
+</html>
